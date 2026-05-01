@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>令和8年度 租税教室管理</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#f5f4f0;--surface:#fff;--surface2:#f0efe9;--border:#dddbd3;
+    --accent:#1a5c38;--accent-light:#e8f2ec;--accent2:#c8962b;--accent2-light:#fdf3e0;
+    --text:#1a1916;--muted:#7a7870;--red:#c0392b;--blue:#2563a8;--blue-light:#e8f0fb;
+    --orange:#c8621a;--orange-light:#fef0e7;
+    --r:10px;--sh:0 2px 12px rgba(0,0,0,.07);--shl:0 8px 32px rgba(0,0,0,.12);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--text);font-size:13px;min-height:100vh;}
+
+  .hdr{background:var(--accent);color:#fff;padding:13px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 16px rgba(26,92,56,.25);gap:10px;flex-wrap:wrap;}
+  .hdr-l{display:flex;align-items:center;gap:10px;}
+  .hdr-icon{width:34px;height:34px;background:rgba(255,255,255,.18);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+  .hdr h1{font-size:15px;font-weight:700;}
+  .hdr-sub{font-size:10px;opacity:.72;margin-top:1px;}
+  .hdr-r{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+  .stat-pill{background:rgba(255,255,255,.15);border-radius:7px;padding:4px 10px;text-align:center;}
+  .stat-pill .n{font-size:16px;font-weight:700;font-family:'DM Mono',monospace;}
+  .stat-pill .l{font-size:9px;opacity:.8;}
+  .sync{font-size:11px;opacity:.85;display:flex;align-items:center;gap:5px;background:rgba(255,255,255,.12);padding:4px 10px;border-radius:20px;}
+  .dot{width:6px;height:6px;border-radius:50%;background:#4ade80;flex-shrink:0;}
+  .dot.syncing{background:#fbbf24;animation:blink .9s infinite;}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+  .tabs{background:var(--surface);border-bottom:2px solid var(--border);display:flex;padding:0 16px;position:sticky;top:64px;z-index:99;overflow-x:auto;}
+  .tab{padding:10px 15px;cursor:pointer;font-size:13px;font-weight:500;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .18s;white-space:nowrap;}
+  .tab:hover{color:var(--accent);}
+  .tab.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:700;}
+
+  .content{padding:16px 20px;}
+  .panel{display:none;}.panel.active{display:block;}
+
+  .filters{display:flex;gap:7px;margin-bottom:13px;flex-wrap:wrap;align-items:center;}
+  .sbox{display:flex;align-items:center;gap:6px;background:var(--surface);border:1.5px solid var(--border);border-radius:8px;padding:6px 10px;flex:1;min-width:150px;}
+  .sbox input{border:none;outline:none;font-family:inherit;font-size:13px;background:transparent;width:100%;}
+  .fbtn{padding:6px 11px;border-radius:7px;border:1.5px solid var(--border);background:var(--surface);cursor:pointer;font-family:inherit;font-size:12px;font-weight:500;color:var(--muted);transition:all .15s;white-space:nowrap;}
+  .fbtn:hover,.fbtn.active{background:var(--accent-light);border-color:var(--accent);color:var(--accent);}
+
+  /* ステータス別フィルター */
+  .fbtn.f-kakutei.active{background:var(--blue-light);border-color:var(--blue);color:var(--blue);}
+  .fbtn.f-sumi.active{background:var(--accent-light);border-color:var(--accent);color:var(--accent);}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px;}
+  .card{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r);overflow:hidden;transition:all .2s;}
+  .card:hover{border-color:var(--accent);box-shadow:var(--shl);transform:translateY(-2px);}
+  .card-hdr{padding:10px 13px 8px;display:flex;justify-content:space-between;align-items:flex-start;border-bottom:1px solid var(--border);}
+  .cno{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);background:var(--surface2);padding:2px 6px;border-radius:4px;flex-shrink:0;}
+  .cname{font-size:14px;font-weight:700;flex:1;margin:0 7px;}
+  .sbadge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;white-space:nowrap;flex-shrink:0;}
+  .s-sumi{background:var(--accent-light);color:var(--accent);}
+  .s-kakutei{background:var(--blue-light);color:var(--blue);}
+  .s-choseichu{background:var(--surface2);color:var(--muted);}
+  .card-body{padding:8px 13px;}
+  .irow{display:flex;align-items:flex-start;gap:6px;margin-bottom:5px;font-size:12px;}
+  .ilbl{color:var(--muted);min-width:52px;font-size:11px;font-weight:500;padding-top:1px;flex-shrink:0;}
+  .ival{color:var(--text);flex:1;line-height:1.5;}
+  .ival.hl{font-weight:600;color:var(--accent);}
+  .ival.date{font-weight:700;color:var(--blue);font-family:'DM Mono',monospace;}
+  .card-ft{background:var(--surface2);padding:7px 13px;display:flex;gap:5px;align-items:center;flex-wrap:wrap;justify-content:space-between;}
+  .chips{display:flex;gap:5px;flex-wrap:wrap;}
+  .chip{display:inline-flex;align-items:center;gap:2px;font-size:10px;padding:2px 7px;border-radius:20px;background:var(--surface);border:1px solid var(--border);color:var(--muted);font-weight:500;}
+  .chip.c1{border-color:var(--accent);color:var(--accent);background:var(--accent-light);}
+  .chip.c2{border-color:var(--accent2);color:var(--accent2);background:var(--accent2-light);}
+  .chip.c3{border-color:var(--blue);color:var(--blue);background:var(--blue-light);}
+  .chip.c4{border-color:var(--orange);color:var(--orange);background:var(--orange-light);}
+  .ebtn{font-size:11px;padding:4px 10px;border-radius:6px;border:1.5px solid var(--accent);background:#fff;color:var(--accent);cursor:pointer;font-family:inherit;font-weight:600;transition:all .15s;white-space:nowrap;}
+  .ebtn:hover{background:var(--accent);color:#fff;}
+
+  .twrap{background:var(--surface);border-radius:var(--r);border:1.5px solid var(--border);overflow:auto;box-shadow:var(--sh);}
+  table{width:100%;border-collapse:collapse;font-size:12px;min-width:1000px;}
+  thead th{background:var(--accent);color:#fff;padding:8px 9px;text-align:left;font-weight:600;font-size:11px;white-space:nowrap;position:sticky;top:0;}
+  tbody tr{border-bottom:1px solid var(--border);transition:background .12s;}
+  tbody tr:hover{background:var(--accent-light);}
+  tbody td{padding:8px 9px;vertical-align:middle;white-space:nowrap;}
+  tbody td.wrap{white-space:normal;max-width:140px;line-height:1.5;}
+  .tno{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);text-align:center;}
+  .dset{color:var(--blue);font-weight:700;}
+  .dtbd{color:var(--muted);font-style:italic;}
+  .tedit{padding:3px 7px;border-radius:5px;border:1px solid var(--accent);background:#fff;color:var(--accent);cursor:pointer;font-size:11px;font-family:inherit;font-weight:600;}
+  .tedit:hover{background:var(--accent);color:#fff;}
+
+  /* カレンダー */
+  .calwrap{display:grid;grid-template-columns:1fr 1fr;gap:13px;}
+  @media(max-width:800px){.calwrap{grid-template-columns:1fr;}}
+  .calmon{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--sh);}
+  .calmhdr{background:var(--accent);color:#fff;padding:8px 14px;font-size:13px;font-weight:700;}
+  .calgrid{display:grid;grid-template-columns:repeat(7,1fr);border-left:1px solid var(--border);border-top:1px solid var(--border);}
+  .caldow{background:var(--surface2);text-align:center;padding:4px;font-size:10px;font-weight:600;color:var(--muted);border-right:1px solid var(--border);border-bottom:1px solid var(--border);}
+  .caldow.sun{color:var(--red);}.caldow.sat{color:var(--blue);}
+  .calcell{min-height:50px;padding:3px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);}
+  .caldn{font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);}
+  .caldn.sun{color:var(--red);}.caldn.sat{color:var(--blue);}
+  .calcell.empty{background:var(--surface2);}
+  .calev{margin-top:2px;font-size:9px;font-weight:600;padding:1px 3px;border-radius:3px;line-height:1.4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .calev.confirmed{background:var(--accent);color:#fff;}
+  .calev.kibou{background:var(--accent2);color:#fff;}
+
+  /* サマリー */
+  .sumgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-bottom:18px;}
+  .sumcard{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r);padding:13px 15px;display:flex;align-items:center;gap:10px;box-shadow:var(--sh);}
+  .sumicon{font-size:22px;width:40px;height:40px;background:var(--surface2);border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .sumnum{font-size:24px;font-weight:900;font-family:'DM Mono',monospace;color:var(--accent);}
+  .sumlbl{font-size:11px;color:var(--muted);margin-top:1px;}
+  .monsec{margin-bottom:16px;}
+  .montitle{font-size:13px;font-weight:700;color:var(--accent);padding:6px 11px;background:var(--accent-light);border-left:4px solid var(--accent);border-radius:0 6px 6px 0;margin-bottom:8px;}
+  .minitbl{width:100%;border-collapse:collapse;}
+  .minitbl th{background:var(--surface2);padding:5px 8px;text-align:left;font-size:11px;font-weight:600;color:var(--muted);border-bottom:1px solid var(--border);}
+  .minitbl td{padding:7px 8px;border-bottom:1px solid var(--border);font-size:12px;}
+  .minitbl tbody tr:hover{background:var(--accent-light);}
+
+  /* モーダル */
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--accent);color:#fff;padding:8px 18px;border-radius:30px;font-size:13px;font-weight:600;box-shadow:var(--shl);z-index:999;transition:transform .28s ease;pointer-events:none;}
+  .toast.show{transform:translateX(-50%) translateY(0);}
+
+  .loading{position:fixed;inset:0;background:rgba(245,244,240,.9);z-index:500;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:11px;}
+  .spin{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:sp .8s linear infinite;}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .ltxt{font-size:13px;color:var(--muted);font-weight:500;}
+  @media(max-width:580px){.fgrid{grid-template-columns:1fr;}.grid{grid-template-columns:1fr;}}
+
+  /* 現調日バッジ */
+  .gencho-badge{display:inline-block;background:var(--orange-light);color:var(--orange);border:1px solid var(--orange);border-radius:5px;font-size:10px;font-weight:700;padding:1px 6px;margin-left:4px;}
+</style>
+</head>
+<body>
+
+<div class="loading" id="loading">
+  <div class="spin"></div>
+  <div class="ltxt">データを読み込んでいます...</div>
+</div>
+
+<header class="hdr">
+  <div class="hdr-l">
+    <div class="hdr-icon">🏫</div>
+    <div>
+      <h1>令和8年度 租税教室 管理シート</h1>
+      <div class="hdr-sub">仙台法人会 ／ 全17校 ／ 共同編集モード</div>
+    </div>
+  </div>
+  <div class="hdr-r">
+    <div class="sync"><div class="dot" id="sdot"></div><span id="slbl">同期済み</span></div>
+    <div class="stat-pill"><div class="n" id="st-total">17</div><div class="l">対象校</div></div>
+    <div class="stat-pill"><div class="n" id="st-conf">—</div><div class="l">確定</div></div>
+    <div class="stat-pill"><div class="n" id="st-child">—</div><div class="l">総児童数</div></div>
+    <div class="stat-pill"><div class="n" id="st-koma">—</div><div class="l">総コマ数</div></div>
+  </div>
+</header>
+
+<nav class="tabs">
+  <div class="tab active" data-tab="list" onclick="switchTab('list')">📋 一覧</div>
+  <div class="tab" data-tab="table" onclick="switchTab('table')">📊 テーブル</div>
+  <div class="tab" data-tab="calendar" onclick="switchTab('calendar')">📅 カレンダー</div>
+  <div class="tab" data-tab="summary" onclick="switchTab('summary')">📈 サマリー</div>
+</nav>
+
+<div class="content">
+  <div class="panel active" id="panel-list">
+    <div class="filters">
+      <div class="sbox"><span>🔍</span><input type="text" placeholder="学校名・担当者・メンバーで検索..." oninput="filterCards(this.value)"></div>
+      <button class="fbtn active" onclick="filterMonth('all',this)">全て</button>
+      <button class="fbtn" onclick="filterMonth('5',this)">5月</button>
+      <button class="fbtn" onclick="filterMonth('6',this)">6月</button>
+      <button class="fbtn" onclick="filterMonth('7',this)">7月</button>
+      <button class="fbtn" onclick="filterMonth('12',this)">12月</button>
+      <button class="fbtn" onclick="filterMonth('未定',this)">日程未定</button>
+      <button class="fbtn f-kakutei" onclick="filterStatus('確定',this)">✅ 確定</button>
+      <button class="fbtn f-sumi" onclick="filterStatus('済',this)">🏁 済</button>
+    </div>
+    <div class="grid" id="cards-grid"></div>
+  </div>
+
+  <div class="panel" id="panel-table">
+    <div class="filters" style="margin-bottom:11px;">
+      <div class="sbox"><span>🔍</span><input type="text" placeholder="学校名・担当で検索..." oninput="filterTable(this.value)"></div>
+    </div>
+    <div class="twrap">
+      <table>
+        <thead><tr>
+          <th>No</th><th>学校名</th><th>担当教諭</th><th>担当</th>
+          <th>現調日</th><th>開催日（確定）</th><th>集合時間</th><th>集合場所</th>
+          <th>コマ</th><th>クラス</th><th>児童数</th><th>形式</th><th>場所</th>
+          <th>必要人数</th><th>ステータス</th><th>メンバー</th><th>備考</th>
+        </tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-calendar">
+    <div class="calwrap" id="calwrap"></div>
+    <div style="margin-top:9px;display:flex;gap:11px;font-size:11px;color:var(--muted);">
+      <span><span style="display:inline-block;width:9px;height:9px;background:var(--accent);border-radius:2px;margin-right:3px"></span>開催確定</span>
+      <span><span style="display:inline-block;width:9px;height:9px;background:var(--accent2);border-radius:2px;margin-right:3px"></span>希望日</span>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-summary">
+    <div class="sumgrid" id="sumstats"></div>
+    <div id="summons"></div>
+  </div>
+</div>
+
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SKEY = 'sotei-r8-v5';
+
+// ===== 最新データ（xlsx 令和8年度_3 読み込み結果） =====
+const defaultSchools = [
+  {no:1,name:'木町通小学校',teacher:'千葉先生（初）',tantou:'三浦剛',gencho:'',kaisai:'5/8（金）',kibou1:'',kibou2:'',status:'確定',shugo_time:'8:40',shugo_place:'斎苑',gencha:'8:50',parking:'1台',jikan:'①9:35～10:20/2クラス ②10:40～11:25 ③11:30～12:15',koma:3,class_:3,children:'76人',format_:'ボード',place:'視聴覚室',needed:'7',kouku:'○',tax:'上野敬幸、三浦剛、菅野健志、菅原大助、伊藤昭人',other:'千葉智久、佐藤英松、岡崎真奈美、小堤啓司、高橋繁紀',kizai:'三浦剛',pc:'',note:''},
+  {no:2,name:'東六番丁小学校',teacher:'ホソガイ先生（初）',tantou:'三浦剛',gencho:'',kaisai:'5/19（火）',kibou1:'',kibou2:'',status:'確定',shugo_time:'8:30',shugo_place:'斎苑',gencha:'8:50',parking:'2台',jikan:'①9:40-10:25',koma:1,class_:2,children:'54人',format_:'DX',place:'多目的ホール',needed:'7',kouku:'○',tax:'上野敬幸、三浦剛、菅野健志、菅原大助、伊藤昭人',other:'細川晃嗣',kizai:'三浦剛',pc:'',note:'かるたやります'},
+  {no:3,name:'桂小学校',teacher:'佐々木先生',tantou:'菅原大',gencho:'',kaisai:'5/28（木）',kibou1:'',kibou2:'',status:'確定',shugo_time:'8:50',shugo_place:'小学校駐車場',gencha:'9:00',parking:'6台',jikan:'①9:40～10:25 ②10:45～11:30',koma:2,class_:2,children:'46人',format_:'DX',place:'各教室',needed:'7',kouku:'○',tax:'菅原大助、森',other:'片桐健司、小堤啓司',kizai:'',pc:'',note:''},
+  {no:4,name:'鶴谷小学校',teacher:'菅野（かんの）先生',tantou:'菅野健志',gencho:'',kaisai:'5/29（金）',kibou1:'',kibou2:'',status:'調整中',shugo_time:'12:45',shugo_place:'仙台つばめさわ斎場清月記',gencha:'13:00',parking:'5～6台',jikan:'①13:50～14:35',koma:1,class_:3,children:'73人',format_:'ボード',place:'体育館',needed:'8',kouku:'○',tax:'',other:'',kizai:'',pc:'',note:''},
+  {no:5,name:'吉成小学校',teacher:'鈴木先生',tantou:'佐藤姫',gencho:'',kaisai:'6/2㈫',kibou1:'',kibou2:'',status:'調整中',shugo_time:'8:40',shugo_place:'オートバックス仙台吉成店一体敷地',gencha:'8:50',parking:'3台',jikan:'①9:35～10:20',koma:1,class_:2,children:'45人',format_:'ボード',place:'3階音楽室',needed:'7',kouku:'○',tax:'',other:'',kizai:'',pc:'',note:''},
+  {no:6,name:'富ヶ丘小学校',teacher:'山崎先生',tantou:'菅原大',gencho:'',kaisai:'6/3（水）',kibou1:'',kibou2:'',status:'調整中',shugo_time:'',shugo_place:'',gencha:'',parking:'',jikan:'',koma:3,class_:3,children:'',format_:'ボード',place:'',needed:'',kouku:'○',tax:'菅原大助',other:'',kizai:'',pc:'',note:''},
+  {no:7,name:'上杉山通小学校',teacher:'喜多野真義',tantou:'三浦剛',gencho:'',kaisai:'6/9㈫',kibou1:'',kibou2:'',status:'確定',shugo_time:'8:30',shugo_place:'斎苑',gencha:'8:50',parking:'学校3台',jikan:'①9:45～10:30 ②10:50～11:35 ③11:40～12:25',koma:3,class_:6,children:'183人',format_:'ボード',place:'軽運動場',needed:'7',kouku:'○',tax:'',other:'',kizai:'',pc:'',note:''},
+  {no:8,name:'愛子小学校',teacher:'渡辺（初）',tantou:'佐藤姫',gencho:'',kaisai:'',kibou1:'',kibou2:'',status:'調整中',shugo_time:'8:40',shugo_place:'小学校体育館裏',gencha:'8:50',parking:'10台',jikan:'①9:35～10:20/2クラス ②10:35～11:20',koma:2,class_:3,children:'92人',format_:'ボード',place:'多目的ホール',needed:'7',kouku:'○',tax:'',other:'',kizai:'',pc:'',note:''},
+  {no:9,name:'鶴谷東小学校',teacher:'伊藤先生',tantou:'菅野健志',gencho:'',kaisai:'6/16（火）',kibou1:'',kibou2:'',status:'調整中',shugo_time:'9:50',shugo_place:'清月記仙台つばめさわ斎場',gencha:'10:10',parking:'3台',jikan:'①10:50～11:35',koma:1,class_:1,children:'23人',format_:'ボード',place:'教室',needed:'5',kouku:'○',tax:'',other:'',kizai:'',pc:'',note:''},
+  {no:10,name:'加茂小学校',teacher:'サクライ',tantou:'菅原大',gencho:'',kaisai:'6/18（木）',kibou1:'',kibou2:'',status:'確定',shugo_time:'10:00',shugo_place:'小学校駐車場',gencha:'10:10',parking:'6台',jikan:'①10:40-11:35',koma:1,class_:2,children:'67人',format_:'ボード',place:'音楽室',needed:'7',kouku:'○',tax:'菅原大助、森',other:'佐藤健治',kizai:'',pc:'',note:''},
+  {no:11,name:'幸町南小学校',teacher:'斎藤先生',tantou:'菅野健志',gencho:'',kaisai:'6/25（木）',kibou1:'',kibou2:'',status:'調整中',shugo_time:'12:50',shugo_place:'阿部建設',gencha:'13:00',parking:'最大2台',jikan:'①13:50～14:35',koma:1,class_:2,children:'41人',format_:'ボード',place:'音楽室',needed:'7',kouku:'○',tax:'',other:'',kizai:'',pc:'',note:''},
+  {no:12,name:'北六番丁小学校',teacher:'佐藤先生',tantou:'三浦剛',gencho:'',kaisai:'',kibou1:'',kibou2:'',status:'調整中',shugo_time:'8:35',shugo_place:'斎苑',gencha:'8:50',parking:'1台',jikan:'①9:35～10:20',koma:1,class_:2,children:'75人',format_:'ボード',place:'体育館',needed:'8',kouku:'○',tax:'',other:'',kizai:'',pc:'',note:''},
+  {no:13,name:'燕沢小学校',teacher:'大阪先生',tantou:'菅野健志',gencho:'',kaisai:'7/2（木）',kibou1:'',kibou2:'',status:'調整中',shugo_time:'8:50',shugo_place:'清月記仙台つばめさわ斎場',gencha:'9:00',parking:'4台',jikan:'①9:35-10:20 ②10:50-11:35 ③11:40-12:25',koma:2,class_:2,children:'64人',format_:'ボード',place:'音楽室（4F）',needed:'5',kouku:'',tax:'',other:'',kizai:'',pc:'',note:''},
+  {no:14,name:'錦ヶ丘小学校',teacher:'飯淵泉',tantou:'佐藤姫',gencho:'',kaisai:'',kibou1:'',kibou2:'',status:'調整中',shugo_time:'8:40',shugo_place:'小学校正面玄関',gencha:'8:50',parking:'10台',jikan:'①9:35-10:20/2クラス ②10:40-11:25/2クラス ③11:30-12:15',koma:3,class_:5,children:'173人',format_:'ボード',place:'体育館',needed:'7',kouku:'○',tax:'',other:'',kizai:'',pc:'',note:''},
+  {no:15,name:'将監中央小学校',teacher:'オザマ',tantou:'菅原大',gencho:'',kaisai:'7/15（水）',kibou1:'',kibou2:'',status:'調整中',shugo_time:'',shugo_place:'未定',gencha:'',parking:'',jikan:'',koma:2,class_:2,children:'66人',format_:'ボード',place:'集会室',needed:'5',kouku:'○',tax:'菅原大助',other:'',kizai:'',pc:'',note:''},
+  {no:16,name:'旭丘小学校',teacher:'柏原（初）',tantou:'菅原大',gencho:'',kaisai:'12/15（火）',kibou1:'',kibou2:'',status:'調整中',shugo_time:'',shugo_place:'',gencha:'',parking:'',jikan:'',koma:3,class_:3,children:'',format_:'ボード',place:'',needed:'7',kouku:'',tax:'菅原大助',other:'',kizai:'',pc:'',note:''},
+  {no:17,name:'上愛子小学校',teacher:'佐藤先生',tantou:'佐藤姫',gencho:'',kaisai:'12/17（木）',kibou1:'',kibou2:'',status:'確定',shugo_time:'9:00',shugo_place:'小学校駐車場',gencha:'9:05',parking:'5台程度',jikan:'①9:35-10:20',koma:1,class_:1,children:'8人',format_:'ボード',place:'3階多目的室',needed:'5',kouku:'○',tax:'',other:'',kizai:'',pc:'',note:''},
+];
+
+let schools=[], mf='all', sq='', sf='';
+
+async function loadData(){
+  try{
+    const r=await window.storage.get(SKEY,true);
+    if(r&&r.value){ const d=JSON.parse(r.value); schools=d.length===17?d:defaultSchools; }
+    else{ schools=JSON.parse(JSON.stringify(defaultSchools)); await saveData(); }
+  }catch(e){ schools=JSON.parse(JSON.stringify(defaultSchools)); }
+  document.getElementById('loading').style.display='none';
+  init();
+}
+
+async function saveData(){
+  setSyncing(true);
+  try{ await window.storage.set(SKEY,JSON.stringify(schools),true); setSyncing(false,'同期済み'); }
+  catch(e){ setSyncing(false,'⚠ 保存失敗'); }
+}
+
+function setSyncing(on,lbl){
+  const d=document.getElementById('sdot'),l=document.getElementById('slbl');
+  if(on){d.classList.add('syncing');l.textContent='同期中...';}
+  else{d.classList.remove('syncing');l.textContent=lbl||'同期済み';}
+}
+
+setInterval(async()=>{
+  try{
+    const r=await window.storage.get(SKEY,true);
+    if(r&&r.value){const f=JSON.parse(r.value);if(JSON.stringify(f)!==JSON.stringify(schools)){schools=f;init();showToast('🔄 最新データに更新しました');}}
+  }catch(e){}
+},30000);
+
+function init(){ calcStats(); applyFilters(); renderTable(schools); renderCalendar(); renderSummary(); }
+
+function calcStats(){
+  const conf=schools.filter(s=>s.status==='確定'||s.status==='済').length;
+  const ch=schools.reduce((a,s)=>a+(parseInt(String(s.children).replace(/[^0-9]/g,''))||0),0);
+  const km=schools.reduce((a,s)=>a+(parseInt(s.koma)||0),0);
+  document.getElementById('st-total').textContent=schools.length;
+  document.getElementById('st-conf').textContent=conf;
+  document.getElementById('st-child').textContent=ch.toLocaleString()+'人';
+  document.getElementById('st-koma').textContent=km;
+}
+
+function getMonth(s){
+  const src=s.kaisai||s.kibou1||s.kibou2||'';
+  const m=src.match(/(\d+)[\/月]/);
+  if(m)return parseInt(m[1]);
+  if(/６月|6月/.test(src))return 6;
+  return null;
+}
+function scls(s){return s.status==='済'?'s-sumi':s.status==='確定'?'s-kakutei':'s-choseichu';}
+function slbl(s){
+  if(s.status==='済')return '✅ 完了';
+  if(s.status==='確定')return '📌 確定';
+  const m=getMonth(s);return m?m+'月予定':'日程調整中';
+}
+
+// ===== CARDS =====
+function renderCards(list){
+  const g=document.getElementById('cards-grid');
+  g.innerHTML='';
+  if(!list.length){g.innerHTML='<div style="color:var(--muted);padding:40px;text-align:center;grid-column:1/-1">該当する学校が見つかりません</div>';return;}
+  list.forEach(s=>{
+    const kb=[s.kibou1,s.kibou2].filter(Boolean).join(' / ')||'—';
+    const dateDisp=s.kaisai||kb;
+    const d=document.createElement('div');
+    d.className='card';
+    d.innerHTML=`
+      <div class="card-hdr">
+        <span class="cno">No.${s.no}</span>
+        <span class="cname">${s.name}</span>
+        <span class="sbadge ${scls(s)}">${slbl(s)}</span>
+      </div>
+      <div class="card-body">
+        <div class="irow"><span class="ilbl">担当教諭</span><span class="ival">${s.teacher||'—'}</span></div>
+        <div class="irow"><span class="ilbl">担 当</span><span class="ival hl">${s.tantou||'—'}</span></div>
+        ${s.gencho?`<div class="irow"><span class="ilbl">現調日</span><span class="ival"><span class="gencho-badge">📋 ${s.gencho}</span></span></div>`:''}
+        <div class="irow"><span class="ilbl">${s.kaisai?'開催日':'希望日'}</span><span class="ival date">${dateDisp}</span></div>
+        <div class="irow"><span class="ilbl">集合場所</span><span class="ival">${s.shugo_place||'—'}</span></div>
+        ${s.tax?`<div class="irow"><span class="ilbl">メンバー</span><span class="ival" style="font-size:11px">${s.tax}</span></div>`:''}
+      </div>
+      <div class="card-ft">
+        <div class="chips">
+          <span class="chip c1">📚 ${s.koma}コマ</span>
+          <span class="chip c2">👦 ${s.children}</span>
+          <span class="chip c3">${s.format_}</span>
+          ${s.kouku==='○'?'<span class="chip c3">✈ 航空写真</span>':''}
+          ${s.gencho?'<span class="chip c4">📋 現調済</span>':''}
+        </div>
+
+      </div>`;
+    g.appendChild(d);
+  });
+}
+
+// ===== TABLE =====
+function renderTable(list){
+  const tb=document.getElementById('tbody');
+  tb.innerHTML='';
+  list.forEach(s=>{
+    const kb=[s.kibou1,s.kibou2].filter(Boolean).join('/')||'—';
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td class="tno">${s.no}</td>
+      <td><strong>${s.name}</strong></td>
+      <td>${s.teacher||'—'}</td>
+      <td><strong style="color:var(--accent)">${s.tantou||'—'}</strong></td>
+      <td style="color:var(--orange);font-weight:${s.gencho?600:400}">${s.gencho||'—'}</td>
+      <td class="${s.kaisai?'dset':'dtbd'}">${s.kaisai||'未定'}</td>
+      <td>${s.shugo_time||'—'}</td>
+      <td class="wrap">${s.shugo_place||'—'}</td>
+      <td style="text-align:center">${s.koma}</td>
+      <td style="text-align:center">${s.class_}</td>
+      <td style="text-align:center">${s.children}</td>
+      <td>${s.format_}</td>
+      <td>${s.place||'—'}</td>
+      <td style="text-align:center">${s.needed||'—'}</td>
+      <td><span class="sbadge ${scls(s)}">${slbl(s)}</span></td>
+      <td class="wrap">${s.tax||'—'}</td>
+      <td class="wrap">${s.note||'—'}</td>`;
+    tb.appendChild(tr);
+  });
+}
+
+// ===== CALENDAR =====
+function renderCalendar(){
+  const w=document.getElementById('calwrap');w.innerHTML='';
+  const evmap={};
+  schools.forEach(s=>{
+    const add=(ds,type)=>{
+      if(!ds)return;
+      const m=ds.match(/(\d+)[\/\(]/);if(!m)return;
+      const dm=ds.match(/(\d+)[\/\(](\d+)/);if(!dm)return;
+      const k=`${parseInt(dm[1])}-${parseInt(dm[2])}`;
+      if(!evmap[k])evmap[k]=[];
+      evmap[k].push({name:s.name.replace('小学校',''),type});
+    };
+    if(s.kaisai)add(s.kaisai,'confirmed');
+    else{add(s.kibou1,'kibou');add(s.kibou2,'kibou');}
+  });
+  const dows=['日','月','火','水','木','金','土'];
+  [{m:5,n:'5月',y:2026},{m:6,n:'6月',y:2026},{m:7,n:'7月',y:2026},{m:12,n:'12月',y:2026}].forEach(({m,n,y})=>{
+    const fd=new Date(y,m-1,1).getDay(),days=new Date(y,m,0).getDate();
+    let h=`<div class="calmhdr">令和8年 ${n}</div><div class="calgrid">`;
+    dows.forEach((d,i)=>h+=`<div class="caldow ${i===0?'sun':i===6?'sat':''}">${d}</div>`);
+    for(let i=0;i<fd;i++)h+=`<div class="calcell empty"></div>`;
+    for(let day=1;day<=days;day++){
+      const dow=(fd+day-1)%7,key=`${m}-${day}`,evs=evmap[key]||[];
+      h+=`<div class="calcell"><div class="caldn ${dow===0?'sun':dow===6?'sat':''}">${day}</div>${evs.map(e=>`<div class="calev ${e.type}" title="${e.name}">${e.name}</div>`).join('')}</div>`;
+    }
+    h+='</div>';
+    const div=document.createElement('div');div.className='calmon';div.innerHTML=h;w.appendChild(div);
+  });
+}
+
+// ===== SUMMARY =====
+function renderSummary(){
+  const total=schools.reduce((a,s)=>a+(parseInt(String(s.children).replace(/[^0-9]/g,''))||0),0);
+  const koma=schools.reduce((a,s)=>a+(parseInt(s.koma)||0),0);
+  const conf=schools.filter(s=>s.status==='確定'||s.status==='済').length;
+  const gencho=schools.filter(s=>s.gencho).length;
+  document.getElementById('sumstats').innerHTML=`
+    <div class="sumcard"><div class="sumicon">🏫</div><div><div class="sumnum">${schools.length}</div><div class="sumlbl">対象校</div></div></div>
+    <div class="sumcard"><div class="sumicon">✅</div><div><div class="sumnum">${conf}</div><div class="sumlbl">開催確定</div></div></div>
+    <div class="sumcard"><div class="sumicon">👦</div><div><div class="sumnum">${total.toLocaleString()}</div><div class="sumlbl">総児童数（人）</div></div></div>
+    <div class="sumcard"><div class="sumicon">📚</div><div><div class="sumnum">${koma}</div><div class="sumlbl">総コマ数</div></div></div>
+    <div class="sumcard"><div class="sumicon">📋</div><div><div class="sumnum" style="color:var(--orange)">${gencho}</div><div class="sumlbl">現調済み</div></div></div>
+    <div class="sumcard"><div class="sumicon">💻</div><div><div class="sumnum">${schools.filter(s=>s.format_==='DX').length}</div><div class="sumlbl">DX形式</div></div></div>
+    <div class="sumcard"><div class="sumicon">✈</div><div><div class="sumnum">${schools.filter(s=>s.kouku==='○').length}</div><div class="sumlbl">航空写真あり</div></div></div>`;
+
+  const grp={};
+  schools.forEach(s=>{const mo=getMonth(s);const k=mo?mo+'月':'未定';if(!grp[k])grp[k]=[];grp[k].push(s);});
+  let html='';
+  ['5月','6月','7月','12月','未定'].forEach(mo=>{
+    const list=grp[mo];if(!list)return;
+    html+=`<div class="monsec">
+      <div class="montitle">📅 ${mo}（${list.length}校）</div>
+      <div class="twrap"><table class="minitbl">
+        <thead><tr><th>No</th><th>学校名</th><th>現調日</th><th>開催日</th><th>担当</th><th>コマ</th><th>児童数</th><th>ステータス</th></tr></thead>
+        <tbody>${list.map(s=>{
+          const d=s.kaisai||[s.kibou1,s.kibou2].filter(Boolean).join('/')||'未定';
+          return `<tr>
+            <td style="font-family:'DM Mono',monospace;color:var(--muted);font-size:10px">${s.no}</td>
+            <td><strong>${s.name}</strong></td>
+            <td style="color:var(--orange);font-weight:${s.gencho?600:400}">${s.gencho||'—'}</td>
+            <td style="${s.kaisai?'color:var(--blue);font-weight:700':'color:var(--muted)'}">${d}</td>
+            <td>${s.tantou||'—'}</td>
+            <td style="text-align:center">${s.koma}</td>
+            <td style="text-align:center">${s.children}</td>
+            <td><span class="sbadge ${scls(s)}">${slbl(s)}</span></td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table></div>
+    </div>`;
+  });
+  document.getElementById('summons').innerHTML=html;
+}
+
+// ===== FILTERS =====
+function filterCards(v){sq=v.toLowerCase();applyFilters();}
+function filterMonth(m,btn){
+  mf=m;sf='';
+  document.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  applyFilters();
+}
+function filterStatus(st,btn){
+  sf=sf===st?'':st;
+  document.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('active'));
+  if(sf)btn.classList.add('active');
+  else document.querySelector('.fbtn:first-of-type').classList.add('active');
+  mf='all';
+  applyFilters();
+}
+function applyFilters(){
+  let list=schools;
+  if(sf)list=list.filter(s=>s.status===sf);
+  else if(mf!=='all')list=list.filter(s=>mf==='未定'?!getMonth(s):getMonth(s)==mf);
+  if(sq)list=list.filter(s=>(s.name||'').includes(sq)||(s.tantou||'').includes(sq)||(s.teacher||'').includes(sq)||(s.tax||'').includes(sq)||(s.gencho||'').includes(sq));
+  renderCards(list);
+}
+function filterTable(v){
+  const vv=v.toLowerCase();
+  renderTable(schools.filter(s=>(s.name||'').includes(vv)||(s.tantou||'').includes(vv)||(s.teacher||'').includes(vv)));
+}
+
+function switchTab(tab){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel-'+tab).classList.add('active');
+}
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+loadData();
+</script>
+</body>
+</html>
